@@ -1,0 +1,17 @@
+---
+version: 1.1.6
+title: complex diff 1
+file: ./test/pretty_diff_test.gleam
+test_name: to_string_of_complex_type_1_test
+---
+User(
+  [31m-"Giacomo"[39m [32m+"Tommaso"[39m,
+  25,
+  [[31m-"FP"[39m [32m+"OOP"[39m, [31m-"Gleam"[39m [32m+"Java"[39m, "programming", [32m+"playing the piano"[39m],
+  dict.from_list([
+    [32m+#("Japanese", C1)[39m,
+    [31m-#("Spanish", A1)[39m,
+    #("Italian", Native),
+    #("English", [31m-C2[39m [32m+C1[39m),
+  ]),
+)
