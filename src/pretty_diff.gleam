@@ -1,7 +1,3 @@
-import classify.{
-  BitArrayValue, BoolValue, CustomValue, DictValue, FloatValue, ForeignValue,
-  IntValue, ListValue, NilValue, StringValue, TupleValue,
-}
 import glam/doc.{type Document}
 import gleam/bool
 import gleam/dict.{type Dict}
@@ -11,6 +7,10 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
+import pretty_diff/internal/classify.{
+  BitArrayValue, BoolValue, CustomValue, DictValue, FloatValue, ForeignValue,
+  IntValue, ListValue, NilValue, StringValue, TupleValue,
+}
 
 /// The diff between two Gleam values.
 ///
