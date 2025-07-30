@@ -24,8 +24,8 @@ pub type Diff {
   /// ## Examples
   ///
   /// ```gleam
-  /// pretty_diff.diff(dynamic.from(1), dynamic.from("a"))
-  /// // -> DifferentTypes(dynamic.from(1), dynamic.from("a"))
+  /// pretty_diff.diff(1, "a")
+  /// // -> DifferentTypes(1, "a")
   /// ```
   ///
   DifferentTypes(left: Dynamic, right: Dynamic)
@@ -36,7 +36,7 @@ pub type Diff {
   ///
   /// ```gleam
   /// pretty_diff.diff(1, 1)
-  /// // -> Equal(dynamic.from(1))
+  /// // -> Equal(1)
   /// ```
   ///
   Equal(value: Dynamic)
