@@ -1,5 +1,3 @@
-import * as $stdlib from "../gleam_stdlib/gleam_stdlib.mjs";
-import * as $dynamic from "../gleam_stdlib/gleam/dynamic.mjs";
 import * as $option from "../gleam_stdlib/gleam/option.mjs";
 import * as $gleam from "./gleam.mjs";
 import * as $classify from "./pretty_diff/internal/classify.mjs";
