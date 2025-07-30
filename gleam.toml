@@ -1,5 +1,5 @@
 name = "pretty_diff"
-version = "1.0.0"
+version = "1.0.1"
 
 description = "⚖️ Pretty diffing of Gleam values"
 licences = ["Apache-2.0"]
