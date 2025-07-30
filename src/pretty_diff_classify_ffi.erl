@@ -8,13 +8,13 @@
 decode_nil(X) ->
     case X of
         nil -> {ok, nil};
-        _ -> decode_error("Nil", X)
+        _ -> {error, nil}
     end.
 
 decode_tuple(X) ->
     case X of
         Tuple when is_tuple(Tuple) -> {ok, tuple_to_list(Tuple)};
-        _ -> decode_error("Tuple", X)
+        _ -> {error, nil}
     end.
 
 decode_custom_type(X) ->
@@ -23,7 +23,7 @@ decode_custom_type(X) ->
         Atom when is_atom(Atom) ->
             case inspect_maybe_gleam_atom(erlang:atom_to_binary(Atom), none, <<>>) of
                 {ok, AtomName} -> {ok, {custom_value, AtomName, []}};
-                {error, nil} -> decode_error("CustomType", X)
+                {error, nil} -> {error, nil}
             end;
         % Variants with fields are encoded as tuples where the first items is an
         % atom with the variant's name.
@@ -36,18 +36,12 @@ decode_custom_type(X) ->
                             % field labels so we just pretend they're not named.
                             Fields = lists:map(fun(E) -> {field, none, E} end, Elements),
                             {ok, {custom_value, AtomName, Fields}};
-                        {error, nil} -> decode_error("CustomType", X)
+                        {error, nil} -> {error, nil}
                     end;
-                _ -> decode_error("CustomType", X)
+                _ -> {error, nil}
             end;
-        _ -> decode_error("CustomType", X)
+        _ -> {error, nil}
     end.
-
-decode_error(Expected, Got) ->
-    ExpectedString = list_to_binary(Expected),
-    GotString = gleam_stdlib:classify_dynamic(Got),
-    DecodeError = {decode_error, ExpectedString, GotString, []},
-    {error, [DecodeError]}.
 
 % This is copy pasted from gleam's stdlib and performs some additional checks to
 % make sure the given atom is a gleam's custom type atom. Stdlib doesn't export

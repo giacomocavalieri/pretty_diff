@@ -1,5 +1,6 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
+import gleam/dynamic/decode
 import gleam/option.{type Option}
 import gleam/result
 import gleam/string
@@ -218,47 +219,47 @@ pub type Field {
 ///   ```
 ///
 pub fn classify(value: Dynamic) -> TypedValue {
-  let assert Ok(t) = decode_type(value)
-  t
+  case decode.run(value, typed_value_decoder()) {
+    Error(_) -> ForeignValue(string.inspect(value))
+    Ok(typed_value) -> typed_value
+  }
 }
 
 /// This decoder will always be `Ok`. It returns `Result` so that it is
 /// compatible with other decoders.
 ///
-fn decode_type(value: Dynamic) -> Result(TypedValue, List(dynamic.DecodeError)) {
-  use <- result.lazy_or(result.map(dynamic.int(value), IntValue))
-  use <- result.lazy_or(result.map(dynamic.float(value), FloatValue))
-  use <- result.lazy_or(result.map(dynamic.string(value), StringValue))
-  use <- result.lazy_or(result.map(dynamic.bool(value), BoolValue))
-  use <- result.lazy_or(result.map(decode_nil(value), fn(_) { NilValue }))
-  use <- result.lazy_or(result.map(dynamic.bit_array(value), BitArrayValue))
-  use <- result.lazy_or(decode_custom_type(value))
-  use <- result.lazy_or(result.map(decode_tuple(value), TupleValue))
-  use <- result.lazy_or(result.map(dynamic.shallow_list(value), ListValue))
-  use <- result.lazy_or(result.map(
-    dynamic.dict(dynamic.dynamic, dynamic.dynamic)(value),
-    DictValue,
-  ))
-
-  // Anything else we just inspect. This could be a function or an external
-  // object or type from the runtime.
-  Ok(ForeignValue(string.inspect(value)))
+fn typed_value_decoder() -> decode.Decoder(TypedValue) {
+  decode.one_of(decode.map(decode.int, IntValue), [
+    decode.map(decode.float, FloatValue),
+    decode.map(decode.string, StringValue),
+    decode.map(decode.bool, BoolValue),
+    decode.new_primitive_decoder("Nil", decode_nil)
+      |> decode.map(fn(_) { NilValue }),
+    decode.map(decode.bit_array, BitArrayValue),
+    decode.new_primitive_decoder("CustomType", fn(dynamic) {
+      decode_custom_type(dynamic)
+      |> result.replace_error(NilValue)
+    }),
+    decode.new_primitive_decoder("Tuple", fn(dynamic) {
+      decode_tuple(dynamic)
+      |> result.map(TupleValue)
+      |> result.replace_error(NilValue)
+    }),
+    decode.map(decode.list(decode.dynamic), ListValue),
+    decode.map(decode.dict(decode.dynamic, decode.dynamic), DictValue),
+  ])
 }
 
 // FFI -------------------------------------------------------------------------
 
 @external(erlang, "pretty_diff_classify_ffi", "decode_custom_type")
 @external(javascript, "../../pretty_diff_classify_ffi.mjs", "decode_custom_type")
-fn decode_custom_type(
-  value: Dynamic,
-) -> Result(TypedValue, List(dynamic.DecodeError))
+fn decode_custom_type(value: Dynamic) -> Result(TypedValue, Nil)
 
 @external(erlang, "pretty_diff_classify_ffi", "decode_tuple")
 @external(javascript, "../../pretty_diff_classify_ffi.mjs", "decode_tuple")
-fn decode_tuple(
-  value: Dynamic,
-) -> Result(List(Dynamic), List(dynamic.DecodeError))
+fn decode_tuple(value: Dynamic) -> Result(List(Dynamic), Nil)
 
 @external(erlang, "pretty_diff_classify_ffi", "decode_nil")
 @external(javascript, "../../pretty_diff_classify_ffi.mjs", "decode_nil")
-fn decode_nil(value: Dynamic) -> Result(Nil, List(dynamic.DecodeError))
+fn decode_nil(value: Dynamic) -> Result(Nil, Nil)

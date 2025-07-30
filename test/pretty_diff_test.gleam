@@ -1,7 +1,6 @@
 import birdie
 import gleam/dict.{type Dict}
-import gleam/dynamic
-import gleam/io
+import gleam/dynamic.{type Dynamic}
 import gleeunit
 import gleeunit/should
 import pretty_diff
@@ -11,12 +10,12 @@ pub fn main() {
 }
 
 pub fn diff_of_dynamics_test() {
-  check_equal_diff(dynamic.from(1))
+  check_equal_diff(dynamic_from(1))
 
-  pretty_diff.diff(dynamic.from(1), dynamic.from("string"))
+  pretty_diff.diff(dynamic_from(1), dynamic_from("string"))
   |> should.equal(pretty_diff.DifferentTypes(
-    dynamic.from(1),
-    dynamic.from("string"),
+    dynamic_from(1),
+    dynamic_from("string"),
   ))
 }
 
@@ -86,9 +85,9 @@ pub fn diff_of_lists_test() {
   pretty_diff.diff(["a", "b", "c"], ["a", "a", "c"])
   |> should.equal(
     pretty_diff.Lists([
-      pretty_diff.Shared(1, pretty_diff.Equal(dynamic.from("a"))),
+      pretty_diff.Shared(1, pretty_diff.Equal(dynamic_from("a"))),
       pretty_diff.Shared(2, pretty_diff.Strings("b", "a")),
-      pretty_diff.Shared(3, pretty_diff.Equal(dynamic.from("c"))),
+      pretty_diff.Shared(3, pretty_diff.Equal(dynamic_from("c"))),
     ]),
   )
 
@@ -96,9 +95,9 @@ pub fn diff_of_lists_test() {
   |> should.equal(
     pretty_diff.Lists([
       pretty_diff.Shared(1, pretty_diff.Ints(1, 0)),
-      pretty_diff.Shared(2, pretty_diff.Equal(dynamic.from(2))),
-      pretty_diff.Shared(3, pretty_diff.Equal(dynamic.from(3))),
-      pretty_diff.Right(4, dynamic.from(4)),
+      pretty_diff.Shared(2, pretty_diff.Equal(dynamic_from(2))),
+      pretty_diff.Shared(3, pretty_diff.Equal(dynamic_from(3))),
+      pretty_diff.Right(4, dynamic_from(4)),
     ]),
   )
 }
@@ -110,7 +109,7 @@ pub fn diff_of_tuples_test() {
   pretty_diff.diff(between: #(1, 2, 3), and: #(1, 3, 2))
   |> should.equal(
     pretty_diff.Tuples([
-      pretty_diff.Shared(1, pretty_diff.Equal(dynamic.from(1))),
+      pretty_diff.Shared(1, pretty_diff.Equal(dynamic_from(1))),
       pretty_diff.Shared(2, pretty_diff.Ints(2, 3)),
       pretty_diff.Shared(3, pretty_diff.Ints(3, 2)),
     ]),
@@ -126,11 +125,11 @@ pub fn diff_of_dicts_test() {
     dict.from_list([#(1, "a"), #(2, "c"), #(4, "e")]),
   )
   |> should.equal(pretty_diff.Dicts(
-    only_left: dict.from_list([#(dynamic.from(3), dynamic.from("d"))]),
-    only_right: dict.from_list([#(dynamic.from(4), dynamic.from("e"))]),
+    only_left: dict.from_list([#(dynamic_from(3), dynamic_from("d"))]),
+    only_right: dict.from_list([#(dynamic_from(4), dynamic_from("e"))]),
     shared: dict.from_list([
-      #(dynamic.from(1), pretty_diff.Equal(dynamic.from("a"))),
-      #(dynamic.from(2), pretty_diff.Strings("b", "c")),
+      #(dynamic_from(1), pretty_diff.Equal(dynamic_from("a"))),
+      #(dynamic_from(2), pretty_diff.Strings("b", "c")),
     ]),
   ))
 }
@@ -147,16 +146,16 @@ pub fn diff_of_custom_types_test() {
   pretty_diff.diff(Wibble, Wobble(1, "a"))
   |> should.equal(
     pretty_diff.CustomTypes(pretty_diff.DifferentConstructors(
-      dynamic.from(Wibble),
-      dynamic.from(Wobble(1, "a")),
+      dynamic_from(Wibble),
+      dynamic_from(Wobble(1, "a")),
     )),
   )
 
   pretty_diff.diff(Wobble(1, "a"), Wibble)
   |> should.equal(
     pretty_diff.CustomTypes(pretty_diff.DifferentConstructors(
-      dynamic.from(Wobble(1, "a")),
-      dynamic.from(Wibble),
+      dynamic_from(Wobble(1, "a")),
+      dynamic_from(Wibble),
     )),
   )
 
@@ -164,7 +163,7 @@ pub fn diff_of_custom_types_test() {
   |> should.equal(
     pretty_diff.CustomTypes(
       pretty_diff.SameConstructors("Wobble", [
-        pretty_diff.Equal(dynamic.from(1)),
+        pretty_diff.Equal(dynamic_from(1)),
         pretty_diff.Strings("a", "b"),
       ]),
     ),
@@ -204,11 +203,14 @@ pub fn to_string_of_complex_type_1_test() {
       dict.from_list([#("Italian", Native), #("English", C1), #("Japanese", C1)]),
     )
 
-  io.println("\n" <> pretty_diff.from(one, and: other))
   birdie.snap(pretty_diff.from(one, and: other), title: "complex diff 1")
 }
 
 fn check_equal_diff(value: a) {
   pretty_diff.diff(value, value)
-  |> should.equal(pretty_diff.Equal(dynamic.from(value)))
+  |> should.equal(pretty_diff.Equal(dynamic_from(value)))
 }
+
+@external(erlang, "gleam@function", "identity")
+@external(javascript, "../gleam_stdlib/gleam/function.mjs", "identity")
+fn dynamic_from(value: a) -> Dynamic

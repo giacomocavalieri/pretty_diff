@@ -255,12 +255,16 @@ pub fn from(left: a, and right: a) -> String {
   diff(left, right) |> to_doc |> doc.to_string(80)
 }
 
+@external(erlang, "gleam@function", "identity")
+@external(javascript, "../gleam_stdlib/gleam/function.mjs", "identity")
+fn dynamic_from(value: a) -> Dynamic
+
 /// Get the diff of two values.
 ///
 @internal
 pub fn diff(between one: a, and other: a) -> Diff {
-  let dynamic_one = dynamic.from(one)
-  let dynamic_other = dynamic.from(other)
+  let dynamic_one = dynamic_from(one)
+  let dynamic_other = dynamic_from(other)
 
   use <- bool.guard(one == other, return: Equal(dynamic_one))
 
@@ -468,12 +472,12 @@ fn lcs(one: List(a), other: List(a)) -> List(a) {
   // 💡 A possible optimisation could be using a cache and hit that before
   // calling this function. That might make things faster as well.
   case lowest_occurrence_common_item(one, other) {
-    None -> list.concat([prefix, suffix])
+    None -> list.flatten([prefix, suffix])
     Some(#(item, _, before_a, after_a, before_b, after_b)) ->
       // 💡 A possible optimisation I want to look into is using bags (super
       // fast append only) and turn that into a list only after everything is
       // done. That way we could avoid always repeatedly appending lists.
-      list.concat([
+      list.flatten([
         prefix,
         lcs(list.reverse(before_a), list.reverse(before_b)),
         [item],
@@ -534,7 +538,7 @@ fn histogram_add(
     [] -> histogram
     [first, ..rest] ->
       {
-        use previous <- dict.update(in: histogram, update: first)
+        use previous <- dict.upsert(in: histogram, update: first)
         let new_occurrence = to_occurrence(1, reverse_prefix, rest)
         case previous {
           Some(occurrence) -> sum_occurrences(occurrence, new_occurrence)
